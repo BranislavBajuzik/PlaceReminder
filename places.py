@@ -29,9 +29,19 @@ def take_action(
         print(f"Place required for action {action}")
         return 1
 
+    place = normalize(place)
+
     if action == "add":
+        if place in places:
+            print(f"[warning] Place '{place}' already stored")
+            return 0
+
         places.add(place)
     elif action == "remove":
+        if place not in places:
+            print(f"[warning] Place '{place}' was not stored")
+            return 0
+
         places.discard(place)
 
     file.write_text("\n".join(places), encoding="utf-8")
@@ -39,12 +49,16 @@ def take_action(
     return 0
 
 
+def normalize(text: str) -> str:
+    return string.capwords(text.strip().casefold())
+
+
 def load_places(file: Path) -> Set[str]:
     if not file.is_file():
         return set()
 
     with file.open(encoding="utf-8") as f:
-        return {stripped for line in f if (stripped := string.capwords(line.strip().casefold()))}
+        return {stripped for line in f if (stripped := normalize(line))}
 
 
 def parse_cli() -> argparse.Namespace:
