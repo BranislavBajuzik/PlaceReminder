@@ -73,7 +73,7 @@ def parse_cli() -> argparse.Namespace:
 
     parser.add_argument("file", type=Path, help="File to read/store the places in")
 
-    parser.add_argument("action", choices=("add", "remove", "list", "pick"), help="File to read/store the places in")
+    parser.add_argument("action", choices=("add", "remove", "list", "pick"), help="Action to take")
 
     parser.add_argument("places", nargs="*", help="Places to add/remove")
 
