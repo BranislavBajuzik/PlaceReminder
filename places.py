@@ -48,7 +48,10 @@ def take_action(
 
         places.discard(place)
 
-    file.write_text("\n".join(places), encoding="utf-8")
+    if places:
+        file.write_text("\n".join(places), encoding="utf-8")
+    else:
+        file.unlink(missing_ok=True)
 
     return 0
 
