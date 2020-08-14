@@ -17,6 +17,10 @@ def take_action(
         return 0
 
     if action == "pick":
+        if not places:
+            print("No places stored")
+            return 2
+
         chosen = choice(tuple(places))
         print(f"'{chosen}' was chosen")
 
