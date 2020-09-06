@@ -35,6 +35,7 @@ def take_action(
         print(f"'{chosen}' was chosen")
 
         if (satisfaction := input("Satisfied? (y/n/q): ")[:1].lower()) == "y":
+            print(f"You chose '{chosen}'. Enjoy!")
             return take_action(path, "remove", places, chosen)
         elif satisfaction == "q":
             return 0
