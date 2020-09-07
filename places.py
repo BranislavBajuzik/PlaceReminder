@@ -1,15 +1,54 @@
-"""Main file."""
-
 import argparse
+import logging
 import string
 from pathlib import Path
 from random import choice
 from typing import Literal, Set
 
 
-def take_action(
-    path: Path, action: Literal["add", "remove", "list", "pick"], places: Set[str], place: str = None
-) -> int:
+def general_action(path: Path, action: Literal["list", "pick", "drop"], places: Set[str]) -> int:
+    """Handle user choice and data.
+
+    :param path: Path to store data in.
+    :param action: Action user requested.
+    :param places: All data in :ref:`path`.
+    :return: Exit code.
+    """
+    if action == "list":
+        if places:
+            print(f"Stored places ({len(places)}):")
+            print("\n".join(sorted(places)))
+        else:
+            logging.warning("No places stored")
+        return 0
+
+    if action == "pick":
+        if not places:
+            logging.error("No places stored!")
+            return 2
+
+        while True:
+            chosen = choice(tuple(places))
+            print(f"'{chosen}' was picked")
+
+            answer = input("Satisfied? (Yes/No/Quit): ")[:1].lower()
+
+            if answer == "y":
+                print(f"You chose '{chosen}'. Enjoy!")
+                return place_action(path, "remove", places, chosen)
+            elif answer == "q":
+                return 0
+
+    if action == "drop":
+        if not path.exists():
+            logging.warning("No places stored")
+        else:
+            path.unlink(missing_ok=True)
+            logging.info('Places in "%s" were dropped', path)
+        return 0
+
+
+def place_action(path: Path, action: Literal["add", "remove"], places: Set[str], place: str) -> int:
     """Handle user choice and data.
 
     :param path: Path to store data in.
@@ -18,45 +57,17 @@ def take_action(
     :param place: Data user entered.
     :return: Exit code.
     """
-    if action == "list":
-        if places:
-            print(f"Stored places ({len(places)}):")
-            print("\n".join(sorted(places)))
-        else:
-            print("No places sorted")
-        return 0
-
-    if action == "pick":
-        if not places:
-            print("No places stored")
-            return 2
-
-        chosen = choice(tuple(places))
-        print(f"'{chosen}' was chosen")
-
-        if (satisfaction := input("Satisfied? (y/n/q): ")[:1].lower()) == "y":
-            print(f"You chose '{chosen}'. Enjoy!")
-            return take_action(path, "remove", places, chosen)
-        elif satisfaction == "q":
-            return 0
-        else:
-            return take_action(path, "pick", places)
-
-    if place is None:
-        print(f"Place required for action {action}")
-        return 1
-
     place = normalize(place)
 
     if action == "add":
         if place in places:
-            print(f"[warning] Place '{place}' already stored")
+            logging.warning("Place '%s' is already stored", place)
             return 0
 
         places.add(place)
     elif action == "remove":
         if place not in places:
-            print(f"[warning] Place '{place}' was not stored")
+            logging.warning("Place '%s' was not stored", place)
             return 0
 
         places.discard(place)
@@ -65,6 +76,8 @@ def take_action(
         path.write_text("\n".join(places), encoding="utf-8")
     else:
         path.unlink(missing_ok=True)
+
+    logging.info("Place %s successfully %sed", place, action)
 
     return 0
 
@@ -100,9 +113,16 @@ def parse_cli() -> argparse.Namespace:
 
     parser.add_argument("file", type=Path, help="File to read/store the places in")
 
-    parser.add_argument("action", choices=("add", "remove", "list", "pick"), help="Action to take")
+    parser.add_argument("action", choices=("add", "remove", "drop", "list", "pick"), help="Action to take")
 
     parser.add_argument("places", nargs="*", help="Places to add/remove")
+
+    parser.add_argument(
+        "--log-level",
+        choices=logging._nameToLevel,
+        default=logging._levelToName[logging.NOTSET],
+        help="Sets logging level",
+    )
 
     return parser.parse_args()
 
@@ -114,13 +134,22 @@ def main() -> int:
     """
     args = parse_cli()
 
+    logging.basicConfig(level=args.log_level, format="[%(levelname)s] %(message)s")
+
     places = load_places(args.file)
 
+    if args.action in ("drop", "list", "pick"):
+        if args.places:
+            logging.warning("Action '%s' does not accept any places", args.action)
+
+        return general_action(args.file, args.action, places)
+
     if not args.places:
-        return take_action(args.file, args.action, places)
+        logging.error("Place required for '%s' action", args.action)
+        return 1
 
     for place in args.places:
-        if ret := take_action(args.file, args.action, places, place):
+        if ret := place_action(args.file, args.action, places, place):
             return ret
 
     return 0
