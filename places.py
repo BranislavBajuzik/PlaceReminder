@@ -109,6 +109,15 @@ def parse_cli() -> argparse.Namespace:
 
     :return: Object with arguments bound as attributes.
     """
+
+    def log_level(arg: str) -> str:
+        arg = arg.upper()
+
+        if arg not in logging._nameToLevel:
+            raise argparse.ArgumentTypeError(f"Invalid choice '{arg}', pick from {tuple(logging._nameToLevel)}")
+
+        return arg
+
     parser = argparse.ArgumentParser(prog="PlaceReminder", allow_abbrev=False)
 
     parser.add_argument("file", type=Path, help="File to read/store the places in")
@@ -119,9 +128,9 @@ def parse_cli() -> argparse.Namespace:
 
     parser.add_argument(
         "--log-level",
-        choices=logging._nameToLevel,
-        default=logging._levelToName[logging.NOTSET],
-        help="Sets logging level",
+        type=log_level,
+        default=logging._levelToName[logging.INFO],
+        help="Sets the logging level",
     )
 
     return parser.parse_args()

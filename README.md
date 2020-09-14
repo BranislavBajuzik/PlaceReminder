@@ -3,7 +3,7 @@ Simple bucketlist-like CLI utility for places of interest
 
 ## Run
 ```shell
-places.py [-h] file {add,remove,list,pick} [places [places ...]]
+places.py [-h] [--log-level LOG_LEVEL] file {add,remove,list,pick} [places [places ...]]
 ```
 
 ### positional arguments:
@@ -11,12 +11,15 @@ places.py [-h] file {add,remove,list,pick} [places [places ...]]
     - File to read/store the places in
   - `action`
     - Action to take
-    - One of `add`, `remove`, `list`, `pick`
+    - One of `add`, `remove`, `drop`, `list`, `pick`
 
 ### optional arguments:
   - `places`
     - Optional, space-separated places
     - Places to add/remove
+  - `--log-level`
+    - Minimal level of log messages to show
+    - Default: `INFO`
   - `-h`, `--help`
     - show this help message and exit
 
